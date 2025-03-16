@@ -41,7 +41,7 @@ if "audio_frames" not in st.session_state:
 
 # 🎤 Define an Audio Processor Class
 class AudioProcessor(AudioProcessorBase):
-    def _init_(self):
+    def __init__(self):
         self.audio_frames = []  # Initialize empty buffer
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
