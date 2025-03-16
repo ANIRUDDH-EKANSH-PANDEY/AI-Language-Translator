@@ -45,19 +45,37 @@ text = st.text_area(
 # ✅ *File Upload for Text Extraction*
 uploaded_file = st.file_uploader("Upload a file (TXT, PDF, DOCX)", type=["txt", "pdf", "docx"])
 
-# 📄 *Extract Text from Uploaded File*
+# 📄 Extract Text from Uploaded File
 if uploaded_file:
-    file_ext = uploaded_file.name.split(".")[-1]
+    file_ext = uploaded_file.name.split(".")[-1].lower()  # Convert to lowercase for consistency
     extracted_text = ""
 
-    if file_ext == "txt":
-        extracted_text = uploaded_file.getvalue().decode("utf-8")
-    elif file_ext == "pdf":
-        pdf_reader = PdfReader(uploaded_file)
-        extracted_text = "\n".join(page.extract_text() for page in pdf_reader.pages if page.extract_text())
-    elif file_ext == "docx":
-        doc = Document(uploaded_file)
-        extracted_text = "\n".join(para.text for para in doc.paragraphs)
+    try:
+        if file_ext == "txt":
+            extracted_text = uploaded_file.getvalue().decode("utf-8")
+
+        elif file_ext == "pdf":
+            pdf_reader = PdfReader(uploaded_file)
+            extracted_text = "\n".join(
+                page.extract_text() for page in pdf_reader.pages if page.extract_text()
+            ) or "⚠ Could not extract text from PDF. Try another file."
+
+        elif file_ext == "docx":
+            doc = Document(uploaded_file)
+            extracted_text = "\n".join(para.text for para in doc.paragraphs) or "⚠ No text found in the document."
+
+        else:
+            st.error("❌ Unsupported file format. Please upload a TXT, PDF, or DOCX file.")
+
+    except Exception as e:
+        st.error(f"⚠ Error processing file: {str(e)}")
+        extracted_text = ""
+
+    # ✅ Only update session state if valid text is extracted
+    if extracted_text and "⚠" not in extracted_text:
+        st.session_state.input_text = extracted_text
+    else:
+        st.error("❌ No valid text extracted. Please try another file.")
 
     # Store extracted text in session state
     st.session_state.input_text = extracted_text
