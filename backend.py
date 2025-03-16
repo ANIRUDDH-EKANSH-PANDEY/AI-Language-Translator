@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from googletrans import Translator
+from deep_translator import GoogleTranslator  # ✅ Correct import
 
 app = FastAPI()
-translator = Translator()
 
 class TranslationRequest(BaseModel):
     text: str
@@ -11,7 +10,11 @@ class TranslationRequest(BaseModel):
 
 @app.post("/translate")
 def translate_text(request: TranslationRequest):
-    translated_text = translator.translate(request.text, dest=request.target_language).text
-    return {"translated_text": translated_text}
+    try:
+        # ✅ Correct usage of deep-translator
+        translated_text = GoogleTranslator(source="auto", target=request.target_language).translate(request.text)
+        return {"translated_text": translated_text}
+    except Exception as e:
+        return {"error": str(e)}
 
 # Run the API: uvicorn backend:app --reload
