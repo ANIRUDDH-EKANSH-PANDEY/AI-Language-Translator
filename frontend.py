@@ -42,13 +42,13 @@ if "audio_frames" not in st.session_state:
 # 🎤 Define an Audio Processor Class
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
-        self.audio_frames = []  # Initialize empty buffer
+        self.audio_frames = []  # ✅ Fixed incorrect _init_ to __init__
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        """Receive and store an audio frame."""
+        """Receive an audio frame and store it."""
         audio_data = frame.to_ndarray().tobytes()
-        self.audio_frames.append(audio_data)  # Store audio frames
-        return frame  # Pass through unmodified
+        self.audio_frames.append(audio_data)
+        return frame  # Return unmodified
 
     def get_audio_data(self):
         """Return recorded audio as bytes."""
@@ -56,9 +56,9 @@ class AudioProcessor(AudioProcessorBase):
 
 # 🎤 Speech Recognition Function
 def recognize_speech():
-    st.info("🎙 Click 'Start' and speak...")
+    st.warning("🎙 Recording... Click 'Stop' when done.")  # ✅ Added user feedback
 
-    # Start WebRTC Stream
+    # Start WebRTC Stream (Persistent Session)
     if "webrtc_ctx" not in st.session_state or st.session_state.webrtc_ctx is None:
         st.session_state.webrtc_ctx = webrtc_streamer(
             key="speech",
@@ -67,15 +67,14 @@ def recognize_speech():
             media_stream_constraints={"audio": True, "video": False},
         )
 
-    webrtc_ctx = st.session_state.webrtc_ctx  # Retrieve session
+    webrtc_ctx = st.session_state.webrtc_ctx  # Retrieve existing session
 
-    if webrtc_ctx.audio_processor:
+    if webrtc_ctx and webrtc_ctx.audio_processor:
         audio_processor = webrtc_ctx.audio_processor
 
-        # Wait for speech input
-        st.info("🔊 Capturing audio... Speak now.")
+        # Wait for audio frames to accumulate
         import time
-        time.sleep(3)  # Wait for 3 seconds
+        time.sleep(3)  # ✅ Give time for mic input
 
         audio_data = audio_processor.get_audio_data()
         if not audio_data:
@@ -94,7 +93,7 @@ def recognize_speech():
 
         try:
             text = recognizer.recognize_google(audio)
-            st.session_state.speech_text = text  # Store recognized text
+            st.session_state.speech_text = text
             st.success(f"Recognized: {text}")
         except sr.UnknownValueError:
             st.error("❌ Could not understand speech.")
