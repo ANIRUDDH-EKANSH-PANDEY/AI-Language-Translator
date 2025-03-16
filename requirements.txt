@@ -7,3 +7,4 @@ python-docx
 streamlit
 requests
 pytest
+python-multipart
