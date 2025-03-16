@@ -149,7 +149,7 @@ col1, col2, col3 = st.columns([1, 0.2, 1])
 with col1:
     if st.button("Translate"):
         if text.strip():
-            response = requests.post("https://ai-language-translator.onrender.com", json={"text": text, "target_language": languages[target_language]})
+            response = requests.post("https://ai-language-translator.onrender.com/translate", json={"text": text, "target_language": languages[target_language]})
             if response.status_code == 200:
                 st.session_state.translated_text = response.json().get("translated_text", "Translation failed")
             else:
