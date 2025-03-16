@@ -4,6 +4,7 @@ import av
 import numpy as np
 import speech_recognition as sr
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
+import time
 
 # Set Page Configuration
 st.set_page_config(page_title="AI Translator", layout="centered")
@@ -37,12 +38,14 @@ if "translated_text" not in st.session_state:
 if "speech_text" not in st.session_state:
     st.session_state.speech_text = ""
 if "audio_frames" not in st.session_state:
-    st.session_state.audio_frames = []  # Store audio frames
+    st.session_state.audio_frames = []
+if "recording" not in st.session_state:
+    st.session_state.recording = False  # Indicates if recording is active
 
 # 🎤 Define an Audio Processor Class
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
-        self.audio_frames = []  # ✅ Fixed incorrect _init_ to __init__
+        self.audio_frames = []
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
         """Receive an audio frame and store it."""
@@ -56,25 +59,32 @@ class AudioProcessor(AudioProcessorBase):
 
 # 🎤 Speech Recognition Function
 def recognize_speech():
-    st.warning("🎙 Recording... Click 'Stop' when done.")  # ✅ Added user feedback
+    if st.session_state.recording:
+        st.warning("🎙 Recording... Click 'Stop Recording' when done.")
+        return  # Prevent multiple instances
 
-    # Start WebRTC Stream (Persistent Session)
-    if "webrtc_ctx" not in st.session_state or st.session_state.webrtc_ctx is None:
-        st.session_state.webrtc_ctx = webrtc_streamer(
-            key="speech",
-            mode=WebRtcMode.SENDONLY,
-            audio_processor_factory=AudioProcessor,
-            media_stream_constraints={"audio": True, "video": False},
-        )
+    st.session_state.recording = True
+    st.session_state.webrtc_ctx = webrtc_streamer(
+        key="speech",
+        mode=WebRtcMode.SENDONLY,
+        audio_processor_factory=AudioProcessor,
+        media_stream_constraints={"audio": True, "video": False},
+    )
 
-    webrtc_ctx = st.session_state.webrtc_ctx  # Retrieve existing session
+# 🎤 Stop Recording and Process Audio
+def stop_recording():
+    if not st.session_state.recording:
+        return  # Prevent stopping if not recording
+
+    st.session_state.recording = False
+    webrtc_ctx = st.session_state.webrtc_ctx
 
     if webrtc_ctx and webrtc_ctx.audio_processor:
         audio_processor = webrtc_ctx.audio_processor
 
-        # Wait for audio frames to accumulate
-        import time
-        time.sleep(3)  # ✅ Give time for mic input
+        # Wait for mic input for 10 seconds max
+        st.info("⏳ Processing audio... Please wait.")
+        time.sleep(2)
 
         audio_data = audio_processor.get_audio_data()
         if not audio_data:
@@ -107,9 +117,16 @@ text = st.text_area(
     key="input_text"
 )
 
-# 🎤 "Start Recording" Button (Keeps WebRTC Active)
-if st.button("🎙 Start Recording"):
-    recognize_speech()
+# 🎤 "Start" and "Stop" Buttons for Recording
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    if st.button("🎙 Start Recording"):
+        recognize_speech()
+
+with col2:
+    if st.session_state.recording and st.button("🛑 Stop Recording"):
+        stop_recording()
 
 # Callback to Clear Text
 def clear_text():
