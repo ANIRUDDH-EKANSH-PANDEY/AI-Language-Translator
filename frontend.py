@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
+import av
+import numpy as np
 import speech_recognition as sr
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, AudioProcessorBase
 
 # Set Page Configuration
 st.set_page_config(page_title="AI Translator", layout="centered")
@@ -21,55 +24,101 @@ st.markdown("""
             border-radius: 8px !important;
             padding: 10px !important;
         }
-
-        /* Change cursor to pointer when hovering over the dropdown */
-        div[data-baseweb="select"] > div {
-            cursor: pointer !important;
-        }
     </style>
 """, unsafe_allow_html=True)
 
 # Initialize Session State
+if "webrtc_ctx" not in st.session_state:
+    st.session_state.webrtc_ctx = None
 if "input_text" not in st.session_state:
     st.session_state.input_text = ""
 if "translated_text" not in st.session_state:
     st.session_state.translated_text = ""
 if "speech_text" not in st.session_state:
-    st.session_state.speech_text = ""  # Temporary storage for speech input
+    st.session_state.speech_text = ""
+if "audio_frames" not in st.session_state:
+    st.session_state.audio_frames = []  # Store audio frames
 
-# Function to Capture Speech and Convert to Text
+# 🎤 Define an Audio Processor Class
+class AudioProcessor(AudioProcessorBase):
+    def _init_(self):
+        self.audio_frames = []
+
+    def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
+        """Receive an audio frame and store it."""
+        audio_data = frame.to_ndarray().tobytes()
+        self.audio_frames.append(audio_data)
+        return frame  # Return unmodified
+
+    def get_audio_data(self):
+        """Return recorded audio as bytes."""
+        return b"".join(self.audio_frames) if self.audio_frames else None
+
+# 🎤 Speech Recognition Function
 def recognize_speech():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("🎙 Speak now...")
-        try:
-            audio = recognizer.listen(source, timeout=5)  # 5-second timeout
-            text = recognizer.recognize_google(audio)  # Convert speech to text
-            st.session_state.speech_text = text  # Store in temporary key
-        except sr.UnknownValueError:
-            st.error("❌ Could not understand the speech.")
-        except sr.RequestError:
-            st.error("❌ Speech service error.")
+    st.info("🎙 Click 'Start' and speak...")
 
-# **✅ Keep Only One st.text_area()**
+    # Start WebRTC Stream (Persistent Session)
+    if "webrtc_ctx" not in st.session_state or st.session_state.webrtc_ctx is None:
+        st.session_state.webrtc_ctx = webrtc_streamer(
+            key="speech",
+            mode=WebRtcMode.SENDONLY,
+            audio_processor_factory=AudioProcessor,
+            media_stream_constraints={"audio": True, "video": False},
+        )
+
+    webrtc_ctx = st.session_state.webrtc_ctx  # Retrieve existing session
+
+    if webrtc_ctx.audio_processor:
+        audio_processor = webrtc_ctx.audio_processor
+
+        # Wait for audio frames to accumulate
+        st.info("🔊 Capturing audio... Speak now.")
+        import time
+        time.sleep(3)  # Wait to collect audio
+
+        audio_data = audio_processor.get_audio_data()
+        if not audio_data:
+            st.error("❌ No valid audio recorded.")
+            return
+
+        # Save to temporary WAV file
+        audio_path = "temp_audio.wav"
+        with open(audio_path, "wb") as f:
+            f.write(audio_data)
+
+        # Recognize Speech
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(audio_path) as source:
+            audio = recognizer.record(source)
+
+        try:
+            text = recognizer.recognize_google(audio)
+            st.session_state.speech_text = text
+            st.success(f"Recognized: {text}")
+        except sr.UnknownValueError:
+            st.error("❌ Could not understand speech.")
+        except sr.RequestError:
+            st.error("❌ Speech recognition service unavailable.")
+
+# ✅ Only One st.text_area()
 text = st.text_area(
     "Enter text to translate:",
-    value=st.session_state.speech_text if st.session_state.speech_text else st.session_state.input_text, 
+    value=st.session_state.speech_text if st.session_state.speech_text else st.session_state.input_text,
     key="input_text"
 )
 
-# 🎤 Add Microphone Button
-if st.button("🎙 Speak"):
+# 🎤 "Start Recording" Button (Keeps WebRTC Active)
+if st.button("🎙 Start Recording"):
     recognize_speech()
-    st.rerun()  # ✅ Force UI refresh to update text area
 
-# Callback Function to Clear Text
+# Callback to Clear Text
 def clear_text():
     st.session_state.input_text = ""
     st.session_state.translated_text = ""
-    st.session_state.speech_text = ""  # Also clear speech input
+    st.session_state.speech_text = ""
 
-# Language Selection Dropdown (Below Text Area)
+# 🌍 Language Selection Dropdown
 languages = {
     "English": "en",
     "Hindi": "hi",
@@ -107,7 +156,7 @@ with col1:
                 st.session_state.translated_text = "Error in translation."
 
 with col3:
-    st.button("Clear", on_click=clear_text)  # ✅ Properly clearing session state using a callback function
+    st.button("Clear", on_click=clear_text)
 
 # Display Translated Text
 if st.session_state.translated_text:
