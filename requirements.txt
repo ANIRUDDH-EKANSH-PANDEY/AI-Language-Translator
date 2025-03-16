@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+googletrans==4.0.0-rc1
+streamlit
+requests
+pytest
+speechrecognition
+pyaudio
