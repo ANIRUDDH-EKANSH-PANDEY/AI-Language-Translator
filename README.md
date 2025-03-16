@@ -1,14 +1,17 @@
-# 🌍 AI-Based Language Translator
+🌍 AI-Based Language Translator
 
-This project is an _AI-powered language translator_ that allows users to _type or speak_ in one language and translate it into another. It supports _multiple languages_ and provides _speech-to-text functionality_ for hands-free translation.
+This project is an AI-powered language translator that allows users to type or upload a file in one language and translate it into another. It supports multiple languages and provides document translation for ease of use.
 
-## ✨ Features
+---
 
-✔ _Translate text between 20+ languages_  
-✔ _Speech-to-Text (Microphone Input)_ 🎙  
-✔ _FastAPI Backend for Processing_  
-✔ _Simple, Responsive UI using Streamlit_  
-✔ _Deployed on Streamlit Cloud_ ☁
+✨ Features
+
+✔ Translate text between 20+ languages
+✔ Upload PDF/DOCX files for translation 📄
+✔ FastAPI Backend for Processing
+✔ Simple, Responsive UI using Streamlit
+✔ Deployed on Streamlit Cloud ☁
+✔ Download translated files 📥
 
 ---
 
@@ -56,14 +59,14 @@ streamlit run frontend.py
 
 ## 📌 Technologies Used
 
-| Technology                | Purpose                   |
-| ------------------------- | ------------------------- |
-| _Python_ 🐍               | Core Programming Language |
-| _Streamlit_ 🎨            | Frontend UI Framework     |
-| _SpeechRecognition_ 🎙     | Microphone Input          |
-| _FastAPI_ ⚡              | Backend API               |
-| _Google Translate API_ 🌎 | Translation Engine        |
-| _Uvicorn_ 🚀              | ASGI Server for FastAPI   |
+✔ Python 🐍 – Core Programming Language
+✔ Streamlit 🎨 – Frontend UI Framework
+✔ FastAPI ⚡ – Backend API
+✔ Deep Translator 🌎 – Language Translation Engine
+✔ Uvicorn 🚀 – ASGI Server for FastAPI
+✔ PyPDF2 📄 – Extract Text from PDFs
+✔ python-docx 📝 – Extract Text from DOCX
+✔ Requests 🔗 – Handle API Requests
 
 ---
 

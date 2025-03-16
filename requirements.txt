@@ -1,8 +1,9 @@
 fastapi
 uvicorn
 deep-translator
+pydantic
+PyPDF2
+python-docx
 streamlit
 requests
 pytest
-speechrecognition
-streamlit-webrtc
