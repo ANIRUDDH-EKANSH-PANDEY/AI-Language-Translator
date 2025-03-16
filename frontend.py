@@ -11,8 +11,6 @@ st.set_page_config(page_title="AI Translator", layout="centered")
 
 # Title
 st.title("🌍 AI-Based Language Translator")
-
-# Subheader Below Title
 st.subheader("Enter Text Below or Use Microphone 🎤")
 
 # Custom CSS for Styling
@@ -38,20 +36,21 @@ if "translated_text" not in st.session_state:
 if "speech_text" not in st.session_state:
     st.session_state.speech_text = ""
 if "audio_frames" not in st.session_state:
-    st.session_state.audio_frames = []
+    st.session_state.audio_frames = []  # Store audio frames
 if "recording" not in st.session_state:
-    st.session_state.recording = False  # Indicates if recording is active
+    st.session_state.recording = False  # Track recording state
 
 # 🎤 Define an Audio Processor Class
 class AudioProcessor(AudioProcessorBase):
     def __init__(self):
         self.audio_frames = []
+        self.last_audio_time = time.time()
 
     def recv(self, frame: av.AudioFrame) -> av.AudioFrame:
-        """Receive an audio frame and store it."""
-        audio_data = frame.to_ndarray().tobytes()
-        self.audio_frames.append(audio_data)
-        return frame  # Return unmodified
+        """Receive and store audio frames."""
+        self.audio_frames.append(frame.to_ndarray().tobytes())
+        self.last_audio_time = time.time()  # Update last audio time
+        return frame  # Return unchanged frame
 
     def get_audio_data(self):
         """Return recorded audio as bytes."""
@@ -59,36 +58,30 @@ class AudioProcessor(AudioProcessorBase):
 
 # 🎤 Speech Recognition Function
 def recognize_speech():
-    if st.session_state.recording:
-        st.warning("🎙 Recording... Click 'Stop Recording' when done.")
-        return  # Prevent multiple instances
-
     st.session_state.recording = True
-    st.session_state.webrtc_ctx = webrtc_streamer(
-        key="speech",
-        mode=WebRtcMode.SENDONLY,
-        audio_processor_factory=AudioProcessor,
-        media_stream_constraints={"audio": True, "video": False},
-    )
+    st.info("🎙 Recording... Click 'Stop Recording' when done.")
 
-# 🎤 Stop Recording and Process Audio
+    # Start WebRTC Stream (Persistent Session)
+    if st.session_state.webrtc_ctx is None:
+        st.session_state.webrtc_ctx = webrtc_streamer(
+            key="speech",
+            mode=WebRtcMode.SENDONLY,
+            audio_processor_factory=AudioProcessor,
+            media_stream_constraints={"audio": True, "video": False},
+        )
+
+# 🎤 Stop Recording & Process Speech
 def stop_recording():
-    if not st.session_state.recording:
-        return  # Prevent stopping if not recording
+    if st.session_state.webrtc_ctx and st.session_state.webrtc_ctx.audio_processor:
+        audio_processor = st.session_state.webrtc_ctx.audio_processor
 
-    st.session_state.recording = False
-    webrtc_ctx = st.session_state.webrtc_ctx
-
-    if webrtc_ctx and webrtc_ctx.audio_processor:
-        audio_processor = webrtc_ctx.audio_processor
-
-        # Wait for mic input for 10 seconds max
-        st.info("⏳ Processing audio... Please wait.")
-        time.sleep(2)
+        # Wait for last audio input
+        time.sleep(1)
 
         audio_data = audio_processor.get_audio_data()
         if not audio_data:
             st.error("❌ No valid audio recorded.")
+            st.session_state.recording = False
             return
 
         # Save to temporary WAV file
@@ -110,6 +103,9 @@ def stop_recording():
         except sr.RequestError:
             st.error("❌ Speech recognition service unavailable.")
 
+    # Reset Recording State
+    st.session_state.recording = False
+
 # ✅ Only One st.text_area()
 text = st.text_area(
     "Enter text to translate:",
@@ -117,16 +113,16 @@ text = st.text_area(
     key="input_text"
 )
 
-# 🎤 "Start" and "Stop" Buttons for Recording
+# 🎤 Recording Buttons
 col1, col2 = st.columns([1, 1])
-
 with col1:
-    if st.button("🎙 Start Recording"):
+    if st.button("🎙 Start Recording", disabled=st.session_state.recording):
         recognize_speech()
 
 with col2:
-    if st.session_state.recording and st.button("🛑 Stop Recording"):
-        stop_recording()
+    if st.session_state.recording:
+        if st.button("⏹ Stop Recording"):
+            stop_recording()
 
 # Callback to Clear Text
 def clear_text():
