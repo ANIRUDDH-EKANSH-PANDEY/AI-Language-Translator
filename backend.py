@@ -1,7 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from pydantic import BaseModel
 from deep_translator import GoogleTranslator
-import PyPDF2
 import docx
 
 app = FastAPI()
@@ -22,9 +21,6 @@ async def translate_file(file: UploadFile = File(...), target_language: str = Fo
     # Extract text based on file type
     if file.filename.endswith(".txt"):
         text = content.decode("utf-8")
-    elif file.filename.endswith(".pdf"):
-        pdf_reader = PyPDF2.PdfReader(content)
-        text = " ".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
     elif file.filename.endswith(".docx"):
         doc = docx.Document(file.file)
         text = "\n".join([para.text for para in doc.paragraphs])

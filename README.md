@@ -7,7 +7,7 @@ This project is an AI-powered language translator that allows users to type or u
 ✨ Features
 
 ✔ Translate text between 20+ languages
-✔ Upload PDF/DOCX files for translation 📄
+✔ Upload TXT/DOCX files for translation 📄
 ✔ FastAPI Backend for Processing
 ✔ Simple, Responsive UI using Streamlit
 ✔ Deployed on Streamlit Cloud ☁
@@ -64,7 +64,6 @@ streamlit run frontend.py
 ✔ FastAPI ⚡ – Backend API
 ✔ Deep Translator 🌎 – Language Translation Engine
 ✔ Uvicorn 🚀 – ASGI Server for FastAPI
-✔ PyPDF2 📄 – Extract Text from PDFs
 ✔ python-docx 📝 – Extract Text from DOCX
 ✔ Requests 🔗 – Handle API Requests
 
@@ -74,11 +73,13 @@ streamlit run frontend.py
 
 ### 1️⃣ Home Page
 
-![Home Page](screenshots/home_page.png)
+![Home Page](screenshots/Home_Page.png)
 
 ### 2️⃣ Translation Result
 
-![Translation Result](screenshots/translation_result.png)
+![Translation Result](screenshots/Text_Result.png)
+![Translation Result](screenshots/File_Text_Extract.png)
+![Translation Result](screenshots/File_Text_Translate.png)
 
 ---
 
