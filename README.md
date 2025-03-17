@@ -17,7 +17,7 @@ This project is an AI-powered language translator that allows users to type or u
 
 ## 🖥 Live Demo
 
-🔗 _Try it here:_ [Your Streamlit App URL](#) (Replace this with your deployed app link)
+🔗 _Try it here:_ [AI-Based Language Translator](https://ai-language-translator-gmknsdinptzxxeycfyhevv.streamlit.app/)
 
 ---
 
