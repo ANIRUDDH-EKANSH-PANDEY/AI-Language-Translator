@@ -29,7 +29,7 @@ Follow these steps to set up the project _locally_:
 
 bash
 git clone [Repository](https://github.com/ANIRUDDH-EKANSH-PANDEY/AI-Language-Translator.git)
-cd AI_Translator_Project
+cd AI-Language-Translator
 
 2️⃣ Create & Activate a Virtual Environment
 
